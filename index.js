@@ -73,12 +73,7 @@ async function product() {
 
 
 
-        // root route
-
-        app.get('/', (req, res) => {
-            res.send('scentholics server is running...');
-        });
-
+       
         /**
          * --------------------------------------------------
          * jwt token
@@ -217,6 +212,11 @@ async function product() {
 product().catch(console.dir);
 
 
+ // root route
+
+ app.get('/', (req, res) => {
+    res.send('scentholics server is running...');
+});
 
 
 //  server listening
