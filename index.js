@@ -197,6 +197,14 @@ async function product() {
             res.send(result);
 
         });
+        /**
+         * -------------
+         * Heroku
+         *------------- 
+        */
+       app.get('/api/product',(req,res)=>{
+             res.send("Herokuuuuu....")
+       });
 
     }
     finally {
