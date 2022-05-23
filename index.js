@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 // const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
-// const ObjectId = require('mongodb').ObjectId;
-// require('dotenv').config();
+const ObjectId = require('mongodb').ObjectId;
+require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -15,7 +15,30 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+/**
+ * --------------------------------------------------
+ * JWT token middleware
+ * --------------------------------------------------
+ */
 
+// function verifyJWT(req, res, next) {
+//     const auth = req.headers.authorization;
+//     if (!auth) {
+//         return res.status(401).send({ message: 'unauthorized access' });
+//     } else {
+//         const token = auth.split(' ')[1];
+//         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+//             if (err) {
+//                 console.log(err);
+//                 return res.status(403).send({ message: 'Forbidden access' });
+//             }
+//             else {
+//                 req.decoded = decoded;
+//                 next();
+//             }
+//         });
+//     };
+// };
 
 /**
  * --------------------------------------------------
@@ -28,16 +51,8 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6t6ti.mongodb.net/?retryWrites=true&w=majority`;
+console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-// client.connect(err => {
-//   const collection = client.db("scentholics").collection("perfumes");
-
-//   // perform actions on the collection object
-//   console.log("Mongo is connected");
-//   client.close();
-// });
-
-
 
 /**
  * --------------------------------------------------
@@ -45,25 +60,161 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
  * --------------------------------------------------
  */
 
-// async function products() {
-//     try {
-//         /**
-//          * --------------------------------------------------
-//          * Connect to MongoDB
-//          * --------------------------------------------------
-//          */
-//         await client.connect();
-//         const productCollection = client.db('Scentholics').collection('Perfumes');
+async function product() {
+    try {
+        /**
+         * --------------------------------------------------
+         * Connect to MongoDB
+         * --------------------------------------------------
+         */
+        await client.connect();
+        const productCollection = client.db('Scentholics').collection('Perfumes');
+        
 
 
 
-// root route
+        // root route
 
-app.get('/', (req, res) => {
-    res.send('scentholics server is running...');
-});
+        app.get('/', (req, res) => {
+            res.send('scentholics server is running...');
+        });
 
-     
+        /**
+         * --------------------------------------------------
+         * jwt token
+         * --------------------------------------------------
+         */
+
+        // app.post('/api/login', (req, res) => {
+        //     const user = req.body;
+        //     const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
+        //         expiresIn: '1d'
+        //     });
+        //     res.send({ accessToken });
+
+        // });
+
+        /**
+         * --------------------------------------------------
+         * Get all products
+         * --------------------------------------------------
+         */
+
+        app.get('/api/product', async (req, res) => {
+            const query = req.query;
+            const cursor = query ? query : {};
+            const products = await productCollection.find(cursor).toArray();
+            res.send(products);
+        });
+
+        /**
+         * --------------------------------------------------
+         * fetch latest product
+         * --------------------------------------------------
+         */
+
+        // app.get('/api/products/latest', async (req, res) => {
+        //     const products = await productCollection.find().sort({ _id: -1 }).limit(1).toArray();
+        //     res.send(products);
+        // })
+        /**
+         * --------------------------------------------------
+         * fetch latest 6 product
+         * --------------------------------------------------
+         */
+
+        // app.get('/api/products/latests', async (req, res) => {
+        //     const products = await productCollection.find().sort({ _id: -1 }).limit(6).toArray();
+        //     res.send(products);
+        // })
+
+        /**
+         * --------------------------------------------------
+         * get product by id
+         * --------------------------------------------------
+         */
+
+        app.get('/api/products/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const product = await productCollection.findOne({ _id: ObjectId(id) });
+            res.send(product);
+        });
+
+        /**
+         * --------------------------------------------------
+         * add product
+         * --------------------------------------------------
+         */
+
+        // app.post('/api/products', async (req, res) => {
+        //     const product = req.body;
+        //     const result = await productCollection.insertOne(product);
+        //     res.send(result);
+        // });
+
+        /**
+         * --------------------------------------------------
+         * shipped a product single or multiple
+         * --------------------------------------------------
+         */
+
+        app.put('/api/products/shipped/:id', async (req, res) => {
+            const id = req.params.id;
+            const qtn = req.body.quantity;
+            const product = await productCollection.findOne({ _id: ObjectId(id) });
+            if (product) {
+                const quantity = qtn ? parseInt(product.quantity) - parseInt(qtn) : parseInt(product.quantity) - 1;
+                const result = await productCollection.updateOne({ _id: ObjectId(id) }, { $set: { quantity: quantity } });
+                res.send(result);
+            }
+            else {
+                res.send('product not found');
+            }
+        });
+
+        /**
+         * --------------------------------------------------
+         * update stock
+         * --------------------------------------------------
+         */
+
+        app.put('/api/product/stock/:id', async (req, res) => {
+            const id = req.params.id;
+            const qtn = req.body.quantity;
+            console.log(qtn);
+            const product = await productCollection.findOne({ _id: ObjectId(id) });
+            if (product) {
+                const quantity = parseInt(product.quantity) + parseInt(qtn);
+                const result = await productCollection.updateOne({ _id: ObjectId(id) }, { $set: { quantity: quantity } });
+                res.send(result);
+            }
+        });
+
+        /**
+         * --------------------------------------------------
+         * delete product
+         * --------------------------------------------------
+         */
+        app.delete('/api/product/:id', async (req, res) => {
+            const product = req.params.id;
+            const result = await productCollection.deleteOne({ _id: ObjectId(product) });
+            res.send(result);
+
+        });
+
+    }
+    finally {
+    /**
+     * --------------------------------------------------
+     * disconnect from MongoDB
+     * --------------------------------------------------
+     */
+    // client.close();
+}
+};
+
+product().catch(console.dir);
 
 
 
