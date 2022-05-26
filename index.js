@@ -15,30 +15,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-/**
- * --------------------------------------------------
- * JWT token middleware
- * --------------------------------------------------
- */
 
-// function verifyJWT(req, res, next) {
-//     const auth = req.headers.authorization;
-//     if (!auth) {
-//         return res.status(401).send({ message: 'unauthorized access' });
-//     } else {
-//         const token = auth.split(' ')[1];
-//         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-//             if (err) {
-//                 console.log(err);
-//                 return res.status(403).send({ message: 'Forbidden access' });
-//             }
-//             else {
-//                 req.decoded = decoded;
-//                 next();
-//             }
-//         });
-//     };
-// };
 
 /**
  * --------------------------------------------------
@@ -74,20 +51,7 @@ async function product() {
 
 
        
-        /**
-         * --------------------------------------------------
-         * jwt token
-         * --------------------------------------------------
-         */
-
-        // app.post('/api/login', (req, res) => {
-        //     const user = req.body;
-        //     const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
-        //         expiresIn: '1d'
-        //     });
-        //     res.send({ accessToken });
-
-        // });
+ 
 
         /**
          * --------------------------------------------------
@@ -102,26 +66,7 @@ async function product() {
             res.send(products);
         });
 
-        /**
-         * --------------------------------------------------
-         * fetch latest product
-         * --------------------------------------------------
-         */
-
-        // app.get('/api/products/latest', async (req, res) => {
-        //     const products = await productCollection.find().sort({ _id: -1 }).limit(1).toArray();
-        //     res.send(products);
-        // })
-        /**
-         * --------------------------------------------------
-         * fetch latest 6 product
-         * --------------------------------------------------
-         */
-
-        // app.get('/api/products/latests', async (req, res) => {
-        //     const products = await productCollection.find().sort({ _id: -1 }).limit(6).toArray();
-        //     res.send(products);
-        // })
+        
 
         /**
          * --------------------------------------------------
@@ -129,7 +74,7 @@ async function product() {
          * --------------------------------------------------
          */
 
-        app.get('/api/products/:id', async (req, res) => {
+        app.get('/api/product/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const product = await productCollection.findOne({ _id: ObjectId(id) });
@@ -142,11 +87,12 @@ async function product() {
          * --------------------------------------------------
          */
 
-        // app.post('/api/products', async (req, res) => {
-        //     const product = req.body;
-        //     const result = await productCollection.insertOne(product);
-        //     res.send(result);
-        // });
+        app.post('/api/product', async (req, res) => {
+            const product = req.body;
+            // console.log(product);
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
 
         /**
          * --------------------------------------------------
@@ -154,7 +100,7 @@ async function product() {
          * --------------------------------------------------
          */
 
-        app.put('/api/products/shipped/:id', async (req, res) => {
+        app.put('/api/product/shipped/:id', async (req, res) => {
             const id = req.params.id;
             const qtn = req.body.quantity;
             const product = await productCollection.findOne({ _id: ObjectId(id) });
@@ -168,35 +114,7 @@ async function product() {
             }
         });
 
-        /**
-         * --------------------------------------------------
-         * update stock
-         * --------------------------------------------------
-         */
-
-        app.put('/api/product/stock/:id', async (req, res) => {
-            const id = req.params.id;
-            const qtn = req.body.quantity;
-            console.log(qtn);
-            const product = await productCollection.findOne({ _id: ObjectId(id) });
-            if (product) {
-                const quantity = parseInt(product.quantity) + parseInt(qtn);
-                const result = await productCollection.updateOne({ _id: ObjectId(id) }, { $set: { quantity: quantity } });
-                res.send(result);
-            }
-        });
-
-        /**
-         * --------------------------------------------------
-         * delete product
-         * --------------------------------------------------
-         */
-        app.delete('/api/product/:id', async (req, res) => {
-            const product = req.params.id;
-            const result = await productCollection.deleteOne({ _id: ObjectId(product) });
-            res.send(result);
-
-        });
+       
         /**
          * -------------
          * Heroku
